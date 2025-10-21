@@ -1,0 +1,27 @@
+{
+  "name": "secure-api",
+  "version": "1.0.0",
+  "description": "Secure Express.js starter (CSRF + example auth)",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "dev": "nodemon src/app.js",
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "express-rate-limit": "^7.1.0",
+    "express-session": "^1.17.3",
+    "helmet": "^7.1.0",
+    "joi": "^17.10.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
