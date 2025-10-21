@@ -56,12 +56,37 @@ DATABASE_URL="mysql://votre_utilisateur:votre_mot_de_passe@localhost:3306/secure
 ```
 
 ### 4. **Générez et appliquez les migrations :**
-```bash
-# Créer et appliquer la migration initiale
-npx prisma migrate dev --name init
 
+**⚠️ Important :** Assurez-vous que votre utilisateur MySQL a les droits nécessaires avant de continuer.
+
+**Option A - Si la base `secure_api` existe déjà :**
+```bash
 # Générer le client Prisma
 npx prisma generate
+
+# Appliquer les migrations sur la base existante
+npx prisma migrate dev --name init
+```
+
+**Option B - Si la base `secure_api` n'existe pas encore :**
+```bash
+# 1. Créer manuellement la base (en tant que root ou utilisateur avec privilèges)
+mysql -u root -p -e "CREATE DATABASE secure_api;"
+
+# 2. Générer le client Prisma
+npx prisma generate
+
+# 3. Appliquer les migrations
+npx prisma migrate dev --name init
+```
+
+**Option C - Vérification et diagnostic :**
+```bash
+# Vérifier les droits de votre utilisateur
+mysql -u votre_utilisateur -p -e "SHOW GRANTS;"
+
+# Tester la connexion Prisma
+npx prisma db pull
 ```
 
 ### 5. **Démarrez le serveur de développement :**
@@ -700,6 +725,21 @@ kill -9 $(lsof -ti:3000)
 - Vérifiez les credentials dans `DATABASE_URL`
 - Vérifiez que la base `secure_api` existe
 - Testez la connexion : `npx prisma db pull`
+
+**Erreur "Access denied" lors des migrations Prisma** :
+```bash
+# Problème : L'utilisateur n'a pas les droits pour créer/modifier des bases
+# Solution 1 : Créer la base manuellement avec un utilisateur privilégié
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS secure_api;"
+
+# Solution 2 : Donner les droits nécessaires à votre utilisateur
+mysql -u root -p -e "GRANT ALL PRIVILEGES ON secure_api.* TO 'votre_utilisateur'@'localhost';"
+mysql -u root -p -e "GRANT CREATE ON *.* TO 'votre_utilisateur'@'localhost';"
+mysql -u root -p -e "FLUSH PRIVILEGES;"
+
+# Solution 3 : Vérifier les droits actuels
+mysql -u votre_utilisateur -p -e "SHOW GRANTS;"
+```
 
 **Erreurs Prisma courantes** :
 - `P2002` : Contrainte unique violée (utilisateur déjà existant)
