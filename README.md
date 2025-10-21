@@ -3,18 +3,22 @@
 ![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
 ![Express](https://img.shields.io/badge/Express-4.19+-blue.svg)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)
-![Prisma](https://img.shields.io/badge/Prisma-5.0+-blueviolet.svg)
+![Prisma](https://img.shields.io/badge/Prisma-6.17+-blueviolet.svg)
+![Jest](https://img.shields.io/badge/Jest-30.2+-red.svg)
+![Tests](https://img.shields.io/badge/Tests-40%2F40%20✅-success.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Security](https://img.shields.io/badge/Security-Production%20Ready-brightgreen.svg)
 
 **Un squelette Express.js sécurisé et robuste avec MySQL/Prisma, conçu pour être incassable et prêt pour la production.**
 
 ✨ **Fonctionnalités principales :**
-- 🛡️ **Sécurité renforcée** : CSRF, CORS, Rate Limiting, Helmet, validation stricte
-- 🗄️ **Base MySQL/Prisma** : ORM type-safe avec migrations automatiques
-- 🔄 **Résilience maximale** : Gestion d'erreurs avancée, retry automatique, arrêt gracieux
-- ⚡ **Performance optimisée** : Connection pooling, timeout intelligent, health checks
-- 🧪 **Facilement testable** : Exemples cURL/JavaScript, monitoring complet
+- 🛡️ **Sécurité renforcée** : CSRF, CORS, Rate Limiting, Helmet, validation stricte, sanitisation XSS
+- 🗄️ **Base MySQL/Prisma 6.17** : ORM type-safe avec migrations automatiques et client généré
+- 🔄 **Résilience maximale** : Middleware de résilience, gestion d'erreurs centralisée, timeout configurables
+- ⚡ **Performance optimisée** : Connection pooling, timeout intelligent, health checks complets
+- 🧪 **Tests complets** : 40 tests unitaires (100% ✅) + script d'intégration automatisé
+- 🚀 **ES Modules natifs** : Architecture moderne avec support Jest et Node.js 18+
+- 📋 **Prêt production** : Documentation exhaustive, scripts automatisés, monitoring intégré
 
 ## 🚀 Démarrage rapide
 
@@ -67,9 +71,14 @@ npm run dev
 
 ### 6. **Testez l'installation :**
 ```bash
-# Le serveur fonctionne sur http://localhost:3000
+# Test de base - Le serveur fonctionne sur http://localhost:3000
 curl http://localhost:3000/api/health
+
+# Test complet automatisé (recommandé)
+./test-api.sh
 ```
+
+**✅ Si le test automatisé affiche tous les ✅ verts, votre API est parfaitement configurée !**
 
 ## 🔒 Fonctionnalités de sécurité
 
@@ -94,17 +103,19 @@ curl http://localhost:3000/api/health
 ## 🛡️ Résilience et fiabilité
 
 ### Protection contre les crashes
-- **Gestion globale des erreurs** : Capture de toutes les erreurs non gérées
-- **Wrapper async** : Protection automatique des routes asynchrones
+- **Gestion globale des erreurs** : Capture de toutes les erreurs non gérées avec middleware centralisé
+- **Wrapper async** : Protection automatique des routes asynchrones (`asyncHandler`)
 - **Retry automatique** : Nouvelles tentatives pour les erreurs de base de données
-- **Timeout des requêtes** : Protection contre les requêtes qui traînent (30s)
+- **Timeout des requêtes** : Protection contre les requêtes qui traînent (30s par défaut)
 - **Arrêt propre** : Fermeture gracieuse des connexions lors de l'arrêt
+- **Sanitisation XSS** : Nettoyage automatique contre les injections de scripts
 
 ### Surveillance et monitoring
-- **Health Check** : Route `/api/health` pour vérifier l'état du système
-- **Logs détaillés** : Journalisation complète des erreurs avec contexte
-- **Métriques système** : Utilisation mémoire, uptime, état de la base
-- **Sanitisation** : Nettoyage automatique des entrées utilisateur
+- **Health Check** : Route `/api/health` pour vérifier l'état du système et de la DB
+- **Logs détaillés** : Journalisation complète des erreurs avec contexte et stack traces
+- **Métriques système** : Utilisation mémoire, uptime, état de la base de données
+- **Gestion spécialisée** : Erreurs CSRF, Prisma, Joi avec messages appropriés
+- **Mode production** : Masquage des détails sensibles d'erreur en production
 
 ## 📁 Structure du projet
 
@@ -121,15 +132,25 @@ curl http://localhost:3000/api/health
 │   ├── middlewares/
 │   │   ├── auth.js        # Middleware d'authentification
 │   │   ├── errorHandler.js# Gestionnaire d'erreurs global
+│   │   ├── resilience.js  # Middleware de résilience (timeout, sanitization)
 │   │   └── validate.js    # Middleware de validation Joi
 │   ├── routes/
 │   │   ├── auth.js        # Routes d'authentification
 │   │   └── index.js       # Routes principales
 │   └── services/
 │       └── userService.js # Service de gestion des utilisateurs
-├── .env                   # Variables d'environnement
-├── .env.example          # Exemple de configuration
-└── package.json          # Dépendances et scripts
+├── tests/
+│   ├── middlewares/       # Tests unitaires des middlewares
+│   ├── routes/           # Tests d'intégration des routes
+│   ├── services/         # Tests des services
+│   ├── helpers.js        # Utilitaires de test
+│   └── setup.js          # Configuration des tests
+├── test-api.sh           # Script de test automatisé complet
+├── jest.config.json      # Configuration Jest pour ES modules
+├── .env                  # Variables d'environnement
+├── .env.example         # Exemple de configuration
+├── .env.test            # Configuration de test
+└── package.json         # Dépendances et scripts
 ```
 
 ## 🔗 Endpoints API
@@ -144,6 +165,68 @@ curl http://localhost:3000/api/health
 ### Système
 - `GET /api/` - Message de bienvenue et statut
 - `GET /api/health` - Vérification de santé (base de données, mémoire, uptime)
+
+## 🧪 Tests automatisés
+
+### 📊 État des tests unitaires
+
+L'API dispose d'une suite complète de tests automatisés pour garantir la fiabilité et la sécurité :
+
+```bash
+# Tests unitaires (middlewares uniquement - pas de DB requise)
+npm run test:unit        # Tests des middlewares (40 tests)
+npm run test:middlewares # Alias pour test:unit
+
+# Tests nécessitant une base de données de test
+npm run test:services    # Tests des services
+npm run test:routes      # Tests d'intégration des routes
+
+# Tests complets avec couverture
+npm run test             # Tous les tests
+npm run test:coverage    # Tests avec rapport de couverture
+npm run test:watch       # Mode watch pour développement
+```
+
+**🎯 Résultats des tests unitaires :**
+- ✅ **Middleware d'authentification** : 6/6 tests (100%) 
+  - Validation des sessions utilisateur
+  - Gestion des accès non autorisés
+  - Types d'userId multiples supportés
+
+- ✅ **Middleware de validation** : 12/12 tests (100%)
+  - Validation des schémas utilisateur (Joi)
+  - Gestion des erreurs de validation
+  - Messages d'erreur personnalisés en français
+
+- ✅ **Middleware de résilience** : 12/12 tests (100%)
+  - Gestion des erreurs asynchrones
+  - Sanitisation des entrées (XSS protection)
+  - Configuration de timeout des requêtes
+
+- ✅ **Middleware de gestion d'erreurs** : 10/10 tests (100%)
+  - Logging détaillé des erreurs
+  - Gestion spécialisée (CSRF, Prisma, Joi)
+  - Mode développement/production
+
+**Total : 40/40 tests automatisés (100% de réussite)**
+
+### ⚙️ Configuration des tests
+
+**Jest avec ES Modules :**
+Le projet utilise Jest 30.2.0 configuré pour les modules ES natifs :
+- Configuration dans `jest.config.json`
+- Support des imports/exports ES6
+- Utilisation de `cross-env` et `--experimental-vm-modules`
+- Tests isolés avec mocks appropriés
+
+**Structure des tests :**
+- `tests/middlewares/` : Tests unitaires purs (pas de DB)
+- `tests/services/` : Tests avec base de données de test
+- `tests/routes/` : Tests d'intégration HTTP complets
+- `tests/helpers.js` : Utilitaires partagés
+- `tests/setup.js` : Configuration globale Jest
+
+### 🚀 Tests d'intégration complets
 
 ## 🧪 Tests et utilisation de l'API
 
@@ -304,12 +387,68 @@ echo "💡 Nettoyage : rm $COOKIES_FILE"
 
 **Pour utiliser ce script :**
 ```bash
-# Rendre le script exécutable
-chmod +x test-api.sh
+# Le script est déjà disponible dans le projet avec permissions d'exécution
+# Lancer les tests automatisés complets
+./test-api.sh
 
-# Lancer les tests
+# Si permissions manquantes :
+chmod +x test-api.sh
 ./test-api.sh
 ```
+
+**Ce que fait le script :**
+- ✅ Teste la connectivité de l'API
+- 🔑 Récupère automatiquement les tokens CSRF
+- 📝 Teste l'inscription avec validation
+- 👤 Vérifie l'accès aux routes protégées  
+- 🛡️ Teste la sécurité (CSRF, authentification)
+- 🚪 Teste la déconnexion
+- 🧹 Nettoie automatiquement les cookies
+
+**Exemple de sortie complète :**
+```
+🚀 Test automatisé de l'API sécurisée
+==================================
+📡 Nettoyage des anciens cookies
+📡 Test de connectivité...
+✅ API accessible et fonctionnelle
+� Récupération du token CSRF...
+✅ Token CSRF récupéré : ouOtt5yc-8fV-Go...
+� Test d'inscription...
+✅ Inscription réussie
+   👤 Utilisateur créé : testuser1761080647
+� Test d'accès au profil utilisateur...
+✅ Accès au profil autorisé
+   👤 Profil de : testuser1761080647
+📡 Test de validation - mot de passe faible...
+✅ Validation des mots de passe fonctionne
+📡 Test de sécurité - requête sans token CSRF...
+✅ Protection CSRF active
+📡 Test de déconnexion...
+✅ Déconnexion réussie
+📡 Test de sécurité - accès non autorisé après déconnexion...
+✅ Sécurité OK - Accès refusé aux utilisateurs non connectés
+
+🎉 Tests terminés !
+📋 Résumé des tests effectués :
+   • Connectivité API
+   • Récupération token CSRF
+   • Inscription utilisateur
+   • Accès profil protégé
+   • Validation mot de passe
+   • Protection CSRF
+   • Déconnexion
+   • Sécurité accès non autorisé
+
+💡 Nettoyage : rm cookies.txt
+```
+
+**🎯 Tests de sécurité validés :**
+- ✅ **Protection CSRF** : Requêtes sans token rejetées
+- ✅ **Validation stricte** : Mots de passe faibles refusés
+- ✅ **Authentification** : Accès profil protégé seulement si connecté
+- ✅ **Sessions** : Déconnexion effective et sécurisée
+- ✅ **Gestion automatique** : Extraction et utilisation des tokens CSRF
 
 ### Tests avec JavaScript/Fetch
 
@@ -343,9 +482,21 @@ console.log(result);
 ### CSRF Protection
 L'API utilise une protection CSRF basée sur les sessions. Récupérez le token via `GET /api/auth/csrf-token` et incluez-le dans l'header `X-CSRF-Token` pour toutes les requêtes sensibles.
 
+### ES Modules
+Ce projet utilise les **modules ES natifs** (ESM) :
+- `"type": "module"` dans package.json
+- Utilisation de `import/export` au lieu de `require()`
+- Jest configuré avec `--experimental-vm-modules`
+- Compatibilité Node.js 18+
+
 ### Sessions
 - **Développement** : Sessions stockées en mémoire (perdues au redémarrage)
 - **Production** : Configurez Redis ou un store persistant pour les sessions
+
+### Architecture testée
+- **40 tests unitaires** : 100% de réussite sur tous les middlewares
+- **Script d'intégration** : Validation automatique complète de l'API
+- **Configuration Jest** : Support complet des ES modules avec Node.js
 
 ## 🗄️ Base de données MySQL avec Prisma
 
@@ -483,8 +634,34 @@ const users = await prisma.user.findMany({
 
 ## 🔧 Développement et débogage
 
+### Scripts de développement disponibles
+```bash
+# Développement avec rechargement automatique
+npm run dev
+
+# Tests en mode watch pour développement
+npm run test:watch
+
+# Interface graphique pour explorer la base de données
+npm run db:studio
+
+# Réinitialiser la base de données (⚠️ supprime les données)
+npm run db:reset
+
+# Réinitialiser la base de données de test
+npm run db:reset:test
+
+# Générer le client Prisma après modification du schéma
+npm run db:generate
+```
+
 ### Vérification de l'état
 ```bash
+# Vérifier que l'API fonctionne
+npm run test:health
+# OU
+curl -f http://localhost:3000/api/health
+
 # Vérifier que MySQL fonctionne
 sudo systemctl status mysql
 
@@ -500,8 +677,9 @@ SELECT * FROM users;
 
 ### Logs et monitoring
 - Les requêtes Prisma sont loggées en mode développement
-- Morgan affiche les requêtes HTTP
+- Morgan affiche toutes les requêtes HTTP avec timing
 - Les erreurs sont centralisées via le middleware `errorHandler`
+- Logs colorés dans le terminal pour faciliter le debugging
 
 ### Problèmes courants
 

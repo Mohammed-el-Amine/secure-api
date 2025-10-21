@@ -109,6 +109,9 @@ const server = app.listen(port, () => {
   console.log(`✅ Secure API running on port ${port}`);
 });
 
+// Export de l'app pour les tests
+export default app;
+
 // Gestion des signaux système pour arrêt propre
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
