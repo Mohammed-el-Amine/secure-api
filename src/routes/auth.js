@@ -1,15 +1,13 @@
 import { Router } from 'express';
 import Joi from 'joi';
-import bcrypt from 'bcrypt';
 
 import { validate } from '../middlewares/validate.js';
 import { requireAuth } from '../middlewares/auth.js';
+import { asyncHandler, sanitizeInput, requestTimeout } from '../middlewares/resilience.js';
+import { UserService } from '../services/userService.js';
 
-// Base de données utilisateur simple en mémoire (pour demo uniquement)
-const users = new Map(); // clé: username, valeur: { id, username, passwordHash }
-// Stockage des tentatives de connexion par IP
+// Stockage des tentatives de connexion par IP (à migrer vers Redis en production)
 const loginAttempts = new Map(); // clé: IP, valeur: { attempts, lastAttempt }
-let nextId = 1;
 
 // Configuration des tentatives de connexion
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -38,7 +36,7 @@ const loginSchema = Joi.object({
 const checkLoginAttempts = (ip) => {
   const attempts = loginAttempts.get(ip);
   if (!attempts) return true;
-  
+
   if (attempts.attempts >= MAX_LOGIN_ATTEMPTS) {
     const timeSinceLastAttempt = Date.now() - attempts.lastAttempt;
     if (timeSinceLastAttempt < LOCKOUT_TIME) {
@@ -63,70 +61,83 @@ const clearFailedAttempts = (ip) => {
   loginAttempts.delete(ip);
 };
 
+// Appliquer les middlewares de résilience à toutes les routes
+router.use(requestTimeout(30000)); // 30 secondes timeout
+router.use(sanitizeInput);
+
 // Route: obtenir le token CSRF (utile pour les frontends)
-router.get('/csrf-token', (req, res) => {
+router.get('/csrf-token', asyncHandler(async (req, res) => {
   res.json({ csrfToken: req.csrfToken() });
-});
+}));
 
 // Inscription
-router.post('/register', validate(registerSchema), async (req, res, next) => {
-  try {
-    const { username, password } = req.body;
-    if (users.has(username)) {
-      return res.status(409).json({ error: 'Utilisateur déjà existant' });
-    }
-    const hash = await bcrypt.hash(password, 12);
-    const user = { id: nextId++, username, passwordHash: hash };
-    users.set(username, user);
-    // Connexion automatique après inscription
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    res.status(201).json({ message: 'Utilisateur inscrit avec succès', user: { id: user.id, username: user.username } });
-  } catch (err) {
-    next(err);
-  }
-});
+router.post('/register', validate(registerSchema), asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+
+  // Créer l'utilisateur via le service
+  const user = await UserService.createUser(username, password);
+
+  // Connexion automatique après inscription
+  req.session.userId = user.id;
+  req.session.username = user.username;
+
+  res.status(201).json({
+    message: 'Utilisateur inscrit avec succès',
+    user
+  });
+}));
 
 // Connexion
-router.post('/login', validate(loginSchema), async (req, res, next) => {
-  try {
-    const clientIP = req.ip || req.connection.remoteAddress;
-    
-    // Vérifier les tentatives de connexion
-    if (!checkLoginAttempts(clientIP)) {
-      return res.status(429).json({ 
-        error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.' 
-      });
-    }
+router.post('/login', validate(loginSchema), asyncHandler(async (req, res) => {
+  const clientIP = req.ip || req.connection.remoteAddress;
 
-    const { username, password } = req.body;
-    const user = users.get(username);
-    if (!user) {
-      recordFailedAttempt(clientIP);
-      return res.status(401).json({ error: 'Identifiants invalides' });
-    }
-    
-    const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) {
-      recordFailedAttempt(clientIP);
-      return res.status(401).json({ error: 'Identifiants invalides' });
-    }
-    
-    // Connexion réussie - effacer les tentatives échouées
-    clearFailedAttempts(clientIP);
-    req.session.userId = user.id;
-    req.session.username = user.username;
-    res.json({ message: 'Connecté avec succès', user: { id: user.id, username: user.username } });
-  } catch (err) {
-    next(err);
+  // Vérifier les tentatives de connexion
+  if (!checkLoginAttempts(clientIP)) {
+    return res.status(429).json({
+      error: 'Trop de tentatives de connexion. Réessayez dans 15 minutes.'
+    });
   }
-});
+
+  const { username, password } = req.body;
+
+  // Rechercher l'utilisateur en base
+  const user = await UserService.findByUsername(username);
+  if (!user) {
+    recordFailedAttempt(clientIP);
+    return res.status(401).json({ error: 'Identifiants invalides' });
+  }
+
+  // Vérifier le mot de passe
+  const isPasswordValid = await UserService.verifyPassword(password, user.passwordHash);
+  if (!isPasswordValid) {
+    recordFailedAttempt(clientIP);
+    return res.status(401).json({ error: 'Identifiants invalides' });
+  }
+
+  // Connexion réussie - effacer les tentatives échouées
+  clearFailedAttempts(clientIP);
+  req.session.userId = user.id;
+  req.session.username = user.username;
+
+  res.json({
+    message: 'Connecté avec succès',
+    user: { id: user.id, username: user.username }
+  });
+}));
 
 // Route protégée du profil
-router.get('/profile', requireAuth, (req, res) => {
-  const username = req.session.username;
-  res.json({ message: 'Profil protégé', user: { username } });
-});
+router.get('/profile', requireAuth, asyncHandler(async (req, res) => {
+  const user = await UserService.findById(req.session.userId);
+
+  if (!user) {
+    return res.status(404).json({ error: 'Utilisateur non trouvé' });
+  }
+
+  res.json({
+    message: 'Profil protégé',
+    user
+  });
+}));
 
 // Déconnexion
 router.post('/logout', requireAuth, (req, res, next) => {

@@ -193,3 +193,40 @@ ecosystem.config.js
 # Docker
 .dockerignore
 Dockerfile.dev
+
+# Prisma
+/src/generated/prisma
+
+# Fichiers de test et cookies temporaires
+cookies.txt
+test-cookies.txt
+*.cookie
+
+# Fichiers de dump de base de données
+*.sql
+*.dump
+backup.sql
+dump.sql
+
+# Fichiers temporaires de développement
+scratch.*
+temp.*
+debug.*
+
+# Uploads et fichiers utilisateur (si ajoutés plus tard)
+uploads/
+public/uploads/
+storage/
+
+# Configuration locale de développement
+.vscode/settings.json
+.vscode/launch.json
+
+# Certificats de développement local
+cert/
+certificates/
+ssl/
+
+# Fichiers de monitoring et métriques
+metrics/
+prometheus/

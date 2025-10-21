@@ -76,6 +76,39 @@ app.use('/api', router);
 // Gestionnaire d'erreurs
 app.use(errorHandler);
 
-app.listen(port, () => {
+// Gestionnaire global pour les erreurs non capturées
+process.on('uncaughtException', (error) => {
+  console.error('❌ Erreur non capturée:', error);
+  console.error('Stack trace:', error.stack);
+  // En production, vous pourriez envoyer cette erreur à un service de monitoring
+  // process.exit(1); // Ne pas quitter en mode resilient
+});
+
+// Gestionnaire pour les promesses rejetées non gérées
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Promesse rejetée non gérée à:', promise, 'raison:', reason);
+  // En production, logguer cette erreur
+});
+
+// Gestionnaire pour l'arrêt propre du serveur
+const gracefulShutdown = (signal) => {
+  console.log(`\n📡 Signal ${signal} reçu. Arrêt propre du serveur...`);
+  server.close(() => {
+    console.log('✅ Serveur HTTP fermé');
+    process.exit(0);
+  });
+
+  // Forcer l'arrêt après 10 secondes
+  setTimeout(() => {
+    console.error('❌ Forçage de l\'arrêt du serveur');
+    process.exit(1);
+  }, 10000);
+};
+
+const server = app.listen(port, () => {
   console.log(`✅ Secure API running on port ${port}`);
 });
+
+// Gestion des signaux système pour arrêt propre
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
