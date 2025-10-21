@@ -156,8 +156,26 @@ curl -c cookies.txt http://localhost:3000/api/auth/csrf-token
 ```
 Réponse : `{"csrfToken":"votre-token-csrf"}`
 
+**💡 Astuce :** Pour extraire automatiquement le token depuis la réponse :
+```bash
+# Méthode 1 : Extraire et sauvegarder le token dans une variable
+CSRF_TOKEN=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
+echo "Token CSRF : $CSRF_TOKEN"
+
+# Méthode 2 : Utiliser jq (si installé)
+CSRF_TOKEN=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf-token | jq -r '.csrfToken')
+echo "Token CSRF : $CSRF_TOKEN"
+```
+
 #### 2. **S'inscrire :**
 ```bash
+# Avec le token extrait automatiquement
+curl -b cookies.txt -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: $CSRF_TOKEN" \
+  -d '{"username":"testuser","password":"MonMotDePasse123!"}'
+
+# OU manuellement (remplacez VOTRE_TOKEN_ICI par le token affiché)
 curl -b cookies.txt -X POST http://localhost:3000/api/auth/register \
   -H "Content-Type: application/json" \
   -H "X-CSRF-Token: VOTRE_TOKEN_ICI" \
@@ -167,9 +185,13 @@ Réponse : `{"message":"Utilisateur inscrit avec succès","user":{"id":1,"userna
 
 #### 3. **Se connecter :**
 ```bash
+# Récupérer un nouveau token CSRF (recommandé pour la sécurité)
+CSRF_TOKEN=$(curl -s -b cookies.txt -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
+
+# Se connecter avec le nouveau token
 curl -b cookies.txt -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: VOTRE_TOKEN_ICI" \
+  -H "X-CSRF-Token: $CSRF_TOKEN" \
   -d '{"username":"testuser","password":"MonMotDePasse123!"}'
 ```
 Réponse : `{"message":"Connecté avec succès","user":{"id":1,"username":"testuser"}}`
@@ -182,8 +204,111 @@ Réponse : `{"message":"Profil protégé","user":{"id":1,"username":"testuser","
 
 #### 5. **Se déconnecter :**
 ```bash
+# Récupérer un nouveau token CSRF pour la déconnexion
+CSRF_TOKEN=$(curl -s -b cookies.txt -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
+
+# Se déconnecter
 curl -b cookies.txt -X POST http://localhost:3000/api/auth/logout \
-  -H "X-CSRF-Token: VOTRE_TOKEN_ICI"
+  -H "X-CSRF-Token: $CSRF_TOKEN"
+```
+
+### 🤖 Script de test automatisé
+
+Pour simplifier les tests, voici un script bash complet qui automatise tout le processus :
+
+```bash
+#!/bin/bash
+# test-api.sh - Script de test automatisé pour l'API
+
+API_URL="http://localhost:3000"
+COOKIES_FILE="cookies.txt"
+
+# Fonction pour récupérer le token CSRF
+get_csrf_token() {
+    curl -s -b $COOKIES_FILE -c $COOKIES_FILE $API_URL/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4
+}
+
+echo "🚀 Test automatisé de l'API sécurisée"
+echo "=================================="
+
+# 1. Vérifier que l'API fonctionne
+echo "📡 Test de connectivité..."
+curl -s $API_URL/api/health > /dev/null
+if [ $? -eq 0 ]; then
+    echo "✅ API accessible"
+else
+    echo "❌ API non accessible - Vérifiez que le serveur fonctionne"
+    exit 1
+fi
+
+# 2. Récupérer le token CSRF
+echo "🔑 Récupération du token CSRF..."
+CSRF_TOKEN=$(get_csrf_token)
+if [ -n "$CSRF_TOKEN" ]; then
+    echo "✅ Token CSRF récupéré : ${CSRF_TOKEN:0:10}..."
+else
+    echo "❌ Impossible de récupérer le token CSRF"
+    exit 1
+fi
+
+# 3. Inscription
+echo "📝 Test d'inscription..."
+REGISTER_RESPONSE=$(curl -s -b $COOKIES_FILE -X POST $API_URL/api/auth/register \
+  -H "Content-Type: application/json" \
+  -H "X-CSRF-Token: $CSRF_TOKEN" \
+  -d '{"username":"testuser_'$(date +%s)'","password":"TestPassword123!"}')
+
+if echo "$REGISTER_RESPONSE" | grep -q "inscrit avec succès"; then
+    echo "✅ Inscription réussie"
+    USERNAME=$(echo "$REGISTER_RESPONSE" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
+    echo "   Utilisateur créé : $USERNAME"
+else
+    echo "❌ Échec de l'inscription"
+    echo "   Réponse : $REGISTER_RESPONSE"
+fi
+
+# 4. Test du profil (utilisateur connecté)
+echo "👤 Test d'accès au profil..."
+PROFILE_RESPONSE=$(curl -s -b $COOKIES_FILE $API_URL/api/auth/profile)
+if echo "$PROFILE_RESPONSE" | grep -q "Profil protégé"; then
+    echo "✅ Accès au profil autorisé"
+else
+    echo "❌ Accès au profil refusé"
+fi
+
+# 5. Déconnexion
+echo "🚪 Test de déconnexion..."
+CSRF_TOKEN=$(get_csrf_token)
+LOGOUT_RESPONSE=$(curl -s -b $COOKIES_FILE -X POST $API_URL/api/auth/logout \
+  -H "X-CSRF-Token: $CSRF_TOKEN")
+
+if echo "$LOGOUT_RESPONSE" | grep -q "Déconnecté avec succès"; then
+    echo "✅ Déconnexion réussie"
+else
+    echo "❌ Échec de la déconnexion"
+fi
+
+# 6. Test d'accès non autorisé
+echo "🚫 Test de sécurité (accès non autorisé)..."
+UNAUTH_RESPONSE=$(curl -s $API_URL/api/auth/profile)
+if echo "$UNAUTH_RESPONSE" | grep -q "Non autorisé"; then
+    echo "✅ Sécurité OK - Accès refusé aux utilisateurs non connectés"
+else
+    echo "❌ Problème de sécurité détecté"
+fi
+
+echo ""
+echo "🎉 Tests terminés ! Vérifiez les résultats ci-dessus."
+echo "💡 Nettoyage : rm $COOKIES_FILE"
+```
+
+**Pour utiliser ce script :**
+```bash
+# Rendre le script exécutable
+chmod +x test-api.sh
+
+# Lancer les tests
+./test-api.sh
 ```
 
 ### Tests avec JavaScript/Fetch
@@ -405,9 +530,23 @@ kill -9 $(lsof -ti:3000)
 - Solution : Vérifiez les logs détaillés avec `npx prisma studio`
 
 **Token CSRF invalide** :
-- Utilisez `-c cookies.txt` pour sauvegarder les cookies
-- Utilisez `-b cookies.txt` pour les envoyer
-- Récupérez un nouveau token après chaque redémarrage
+- **Problème** : Erreur 403 "CSRF token mismatch"
+- **Solutions** :
+  ```bash
+  # 1. Vérifiez que les cookies sont sauvegardés ET envoyés
+  curl -c cookies.txt -b cookies.txt http://localhost:3000/api/auth/csrf-token
+  
+  # 2. Récupérez un NOUVEAU token avant chaque action sensible
+  CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
+  
+  # 3. Vérifiez le contenu du fichier cookies.txt
+  cat cookies.txt
+  
+  # 4. Si le problème persiste, supprimez les anciens cookies
+  rm cookies.txt
+  ```
+- **Important** : Le token CSRF change à chaque redémarrage du serveur
+- **Astuce** : Utilisez toujours `-c cookies.txt -b cookies.txt` ensemble
 
 ##  Prêt pour la production
 
