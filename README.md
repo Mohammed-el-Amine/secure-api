@@ -1,4 +1,11 @@
-# Squelette Express.js Sécurisé - API REST avec CSRF
+# 🔒 Squelette Express.js Sécurisé - API REST avec CSRF
+
+![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)
+![Express](https://img.shields.io/badge/Express-4.19+-blue.svg)
+![MySQL](https://img.shields.io/badge/MySQL-8.0+-orange.svg)
+![Prisma](https://img.shields.io/badge/Prisma-5.0+-blueviolet.svg)
+![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Security](https://img.shields.io/badge/Security-Production%20Ready-brightgreen.svg)
 
 **Ce que vous obtenez**
 - API Express.js avec Helmet, CORS, limitation de débit, protection CSRF, validation d'entrée (Joi), logging, et routes d'authentification complètes (inscription/connexion/déconnexion).

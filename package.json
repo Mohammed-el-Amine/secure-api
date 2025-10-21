@@ -6,7 +6,12 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon src/app.js",
-    "start": "node src/app.js"
+    "start": "node src/app.js",
+    "test": "echo 'Tests will be implemented in future versions' && exit 0",
+    "test:health": "curl -f http://localhost:3000/api/health",
+    "db:reset": "npx prisma migrate reset --force",
+    "db:studio": "npx prisma studio",
+    "db:generate": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/client": "^6.17.1",
