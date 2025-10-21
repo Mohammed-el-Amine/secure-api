@@ -22,25 +22,34 @@
 
 ## 🚀 Démarrage rapide
 
-### 1. **Installez les dépendances :**
+### 1. Installation
 ```bash
+git clone https://github.com/Mohammed-el-Amine/secure-api.git
+cd secure-api
 npm install
 ```
 
-### 2. **Configurez MySQL :**
+### 2. Configuration MySQL
 ```bash
 # Connectez-vous à MySQL
 sudo mysql -u root -p
 
 # Créez la base de données et un utilisateur
 CREATE DATABASE secure_api;
-CREATE USER 'votre_utilisateur'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
-GRANT ALL PRIVILEGES ON secure_api.* TO 'votre_utilisateur'@'localhost';
+CREATE USER 'your_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON secure_api.* TO 'your_user'@'localhost';
 FLUSH PRIVILEGES;
 EXIT;
 ```
 
-### 3. **Configurez les variables d'environnement :**
+### 3. Variables d'environnement
+```bash
+cp .env.example .env
+# Modifiez .env avec vos informations MySQL
+```
+
+### 4. Configurez les variables d'environnement
+
 Copiez `.env.example` vers `.env` et modifiez les valeurs :
 ```bash
 cp .env.example .env
@@ -52,10 +61,10 @@ PORT=3000
 NODE_ENV=development
 SESSION_SECRET=votre_secret_tres_securise_avec_plus_de_32_caracteres
 CORS_ORIGIN=http://localhost:5173
-DATABASE_URL="mysql://votre_utilisateur:votre_mot_de_passe@localhost:3306/secure_api"
+DATABASE_URL="mysql://your_user:your_password@localhost:3306/secure_api"
 ```
 
-### 4. **Générez et appliquez les migrations :**
+### 5. Générez et appliquez les migrations
 
 **⚠️ Important :** Assurez-vous que votre utilisateur MySQL a les droits nécessaires avant de continuer.
 
@@ -89,12 +98,12 @@ mysql -u votre_utilisateur -p -e "SHOW GRANTS;"
 npx prisma db pull
 ```
 
-### 5. **Démarrez le serveur de développement :**
+### 6. Démarrez le serveur de développement
 ```bash
 npm run dev
 ```
 
-### 6. **Testez l'installation :**
+### 7. Testez l'installation
 ```bash
 # Test de base - Le serveur fonctionne sur http://localhost:3000
 curl http://localhost:3000/api/health
@@ -116,16 +125,11 @@ curl http://localhost:3000/api/health
 
 ### Authentification robuste
 - **Validation de mots de passe renforcée** : 8 caractères minimum avec majuscules, minuscules, chiffres et caractères spéciaux
-- **Protection contre le brute force** : Limitation des tentatives de connexion (5 tentatives max, blocage 15min)
+- **Protection contre le brute force** : Limitation des tentatives de connexion
 - **Hachage bcrypt** : Salt de niveau 12 pour le stockage sécurisé des mots de passe
 - **Validation des entrées** : Utilisation de Joi pour valider toutes les données d'entrée
 
-### Configuration avancée
-- **Validation des variables d'environnement** : Vérification automatique au démarrage
-- **Headers de sécurité avancés** : CSP, HSTS, limitation de taille des requêtes
-- **Gestion d'erreurs centralisée** : Messages d'erreur appropriés et logging
-
-## 🛡️ Résilience et fiabilité
+## �️ Résilience et fiabilité
 
 ### Protection contre les crashes
 - **Gestion globale des erreurs** : Capture de toutes les erreurs non gérées avec middleware centralisé
@@ -139,44 +143,6 @@ curl http://localhost:3000/api/health
 - **Health Check** : Route `/api/health` pour vérifier l'état du système et de la DB
 - **Logs détaillés** : Journalisation complète des erreurs avec contexte et stack traces
 - **Métriques système** : Utilisation mémoire, uptime, état de la base de données
-- **Gestion spécialisée** : Erreurs CSRF, Prisma, Joi avec messages appropriés
-- **Mode production** : Masquage des détails sensibles d'erreur en production
-
-## 📁 Structure du projet
-
-```
-├── prisma/
-│   ├── schema.prisma      # Schéma de base de données Prisma
-│   └── migrations/        # Migrations de base de données
-├── src/
-│   ├── app.js             # Point d'entrée principal
-│   ├── config/
-│   │   ├── corsOptions.js # Configuration CORS
-│   │   ├── database.js    # Configuration Prisma/MySQL
-│   │   └── validateEnv.js # Validation des variables d'environnement
-│   ├── middlewares/
-│   │   ├── auth.js        # Middleware d'authentification
-│   │   ├── errorHandler.js# Gestionnaire d'erreurs global
-│   │   ├── resilience.js  # Middleware de résilience (timeout, sanitization)
-│   │   └── validate.js    # Middleware de validation Joi
-│   ├── routes/
-│   │   ├── auth.js        # Routes d'authentification
-│   │   └── index.js       # Routes principales
-│   └── services/
-│       └── userService.js # Service de gestion des utilisateurs
-├── tests/
-│   ├── middlewares/       # Tests unitaires des middlewares
-│   ├── routes/           # Tests d'intégration des routes
-│   ├── services/         # Tests des services
-│   ├── helpers.js        # Utilitaires de test
-│   └── setup.js          # Configuration des tests
-├── test-api.sh           # Script de test automatisé complet
-├── jest.config.json      # Configuration Jest pour ES modules
-├── .env                  # Variables d'environnement
-├── .env.example         # Exemple de configuration
-├── .env.test            # Configuration de test
-└── package.json         # Dépendances et scripts
-```
 
 ## 🔗 Endpoints API
 
@@ -191,316 +157,46 @@ curl http://localhost:3000/api/health
 - `GET /api/` - Message de bienvenue et statut
 - `GET /api/health` - Vérification de santé (base de données, mémoire, uptime)
 
-## 🧪 Tests automatisés
+## 🧪 Tests automatisés - 40/40 ✅ (100%)
 
-### 📊 État des tests unitaires
-
-L'API dispose d'une suite complète de tests automatisés pour garantir la fiabilité et la sécurité :
-
+### Tests unitaires des middlewares
 ```bash
-# Tests unitaires (middlewares uniquement - pas de DB requise)
 npm run test:unit        # Tests des middlewares (40 tests)
-npm run test:middlewares # Alias pour test:unit
-
-# Tests nécessitant une base de données de test
-npm run test:services    # Tests des services
-npm run test:routes      # Tests d'intégration des routes
-
-# Tests complets avec couverture
-npm run test             # Tous les tests
 npm run test:coverage    # Tests avec rapport de couverture
 npm run test:watch       # Mode watch pour développement
 ```
 
-**🎯 Résultats des tests unitaires :**
-- ✅ **Middleware d'authentification** : 6/6 tests (100%) 
-  - Validation des sessions utilisateur
-  - Gestion des accès non autorisés
-  - Types d'userId multiples supportés
-
+**Résultats détaillés :**
+- ✅ **Middleware d'authentification** : 6/6 tests (100%)
 - ✅ **Middleware de validation** : 12/12 tests (100%)
-  - Validation des schémas utilisateur (Joi)
-  - Gestion des erreurs de validation
-  - Messages d'erreur personnalisés en français
-
 - ✅ **Middleware de résilience** : 12/12 tests (100%)
-  - Gestion des erreurs asynchrones
-  - Sanitisation des entrées (XSS protection)
-  - Configuration de timeout des requêtes
-
 - ✅ **Middleware de gestion d'erreurs** : 10/10 tests (100%)
-  - Logging détaillé des erreurs
-  - Gestion spécialisée (CSRF, Prisma, Joi)
-  - Mode développement/production
 
-**Total : 40/40 tests automatisés (100% de réussite)**
-
-### ⚙️ Configuration des tests
-
-**Jest avec ES Modules :**
-Le projet utilise Jest 30.2.0 configuré pour les modules ES natifs :
-- Configuration dans `jest.config.json`
-- Support des imports/exports ES6
-- Utilisation de `cross-env` et `--experimental-vm-modules`
-- Tests isolés avec mocks appropriés
-
-**Structure des tests :**
-- `tests/middlewares/` : Tests unitaires purs (pas de DB)
-- `tests/services/` : Tests avec base de données de test
-- `tests/routes/` : Tests d'intégration HTTP complets
-- `tests/helpers.js` : Utilitaires partagés
-- `tests/setup.js` : Configuration globale Jest
-
-### 🚀 Tests d'intégration complets
-
-## 🧪 Tests et utilisation de l'API
-
-### Tests avec cURL
-
-#### 1. **Récupérer le token CSRF :**
+### Tests d'intégration automatisés
 ```bash
-# Sauvegarder les cookies pour maintenir la session
-curl -c cookies.txt http://localhost:3000/api/auth/csrf-token
-```
-Réponse : `{"csrfToken":"votre-token-csrf"}`
-
-**💡 Astuce :** Pour extraire automatiquement le token depuis la réponse :
-```bash
-# Méthode 1 : Extraire et sauvegarder le token dans une variable
-CSRF_TOKEN=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
-echo "Token CSRF : $CSRF_TOKEN"
-
-# Méthode 2 : Utiliser jq (si installé)
-CSRF_TOKEN=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf-token | jq -r '.csrfToken')
-echo "Token CSRF : $CSRF_TOKEN"
-```
-
-#### 2. **S'inscrire :**
-```bash
-# Avec le token extrait automatiquement
-curl -b cookies.txt -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: $CSRF_TOKEN" \
-  -d '{"username":"testuser","password":"MonMotDePasse123!"}'
-
-# OU manuellement (remplacez VOTRE_TOKEN_ICI par le token affiché)
-curl -b cookies.txt -X POST http://localhost:3000/api/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: VOTRE_TOKEN_ICI" \
-  -d '{"username":"testuser","password":"MonMotDePasse123!"}'
-```
-Réponse : `{"message":"Utilisateur inscrit avec succès","user":{"id":1,"username":"testuser","createdAt":"2025-10-21T..."}}`
-
-#### 3. **Se connecter :**
-```bash
-# Récupérer un nouveau token CSRF (recommandé pour la sécurité)
-CSRF_TOKEN=$(curl -s -b cookies.txt -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
-
-# Se connecter avec le nouveau token
-curl -b cookies.txt -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: $CSRF_TOKEN" \
-  -d '{"username":"testuser","password":"MonMotDePasse123!"}'
-```
-Réponse : `{"message":"Connecté avec succès","user":{"id":1,"username":"testuser"}}`
-
-#### 4. **Accéder au profil (route protégée) :**
-```bash
-curl -b cookies.txt http://localhost:3000/api/auth/profile
-```
-Réponse : `{"message":"Profil protégé","user":{"id":1,"username":"testuser","createdAt":"...","updatedAt":"..."}}`
-
-#### 5. **Se déconnecter :**
-```bash
-# Récupérer un nouveau token CSRF pour la déconnexion
-CSRF_TOKEN=$(curl -s -b cookies.txt -c cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
-
-# Se déconnecter
-curl -b cookies.txt -X POST http://localhost:3000/api/auth/logout \
-  -H "X-CSRF-Token: $CSRF_TOKEN"
-```
-
-### 🤖 Script de test automatisé
-
-Pour simplifier les tests, voici un script bash complet qui automatise tout le processus :
-
-```bash
-#!/bin/bash
-# test-api.sh - Script de test automatisé pour l'API
-
-API_URL="http://localhost:3000"
-COOKIES_FILE="cookies.txt"
-
-# Fonction pour récupérer le token CSRF
-get_csrf_token() {
-    curl -s -b $COOKIES_FILE -c $COOKIES_FILE $API_URL/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4
-}
-
-echo "🚀 Test automatisé de l'API sécurisée"
-echo "=================================="
-
-# 1. Vérifier que l'API fonctionne
-echo "📡 Test de connectivité..."
-curl -s $API_URL/api/health > /dev/null
-if [ $? -eq 0 ]; then
-    echo "✅ API accessible"
-else
-    echo "❌ API non accessible - Vérifiez que le serveur fonctionne"
-    exit 1
-fi
-
-# 2. Récupérer le token CSRF
-echo "🔑 Récupération du token CSRF..."
-CSRF_TOKEN=$(get_csrf_token)
-if [ -n "$CSRF_TOKEN" ]; then
-    echo "✅ Token CSRF récupéré : ${CSRF_TOKEN:0:10}..."
-else
-    echo "❌ Impossible de récupérer le token CSRF"
-    exit 1
-fi
-
-# 3. Inscription
-echo "📝 Test d'inscription..."
-REGISTER_RESPONSE=$(curl -s -b $COOKIES_FILE -X POST $API_URL/api/auth/register \
-  -H "Content-Type: application/json" \
-  -H "X-CSRF-Token: $CSRF_TOKEN" \
-  -d '{"username":"testuser_'$(date +%s)'","password":"TestPassword123!"}')
-
-if echo "$REGISTER_RESPONSE" | grep -q "inscrit avec succès"; then
-    echo "✅ Inscription réussie"
-    USERNAME=$(echo "$REGISTER_RESPONSE" | grep -o '"username":"[^"]*"' | cut -d'"' -f4)
-    echo "   Utilisateur créé : $USERNAME"
-else
-    echo "❌ Échec de l'inscription"
-    echo "   Réponse : $REGISTER_RESPONSE"
-fi
-
-# 4. Test du profil (utilisateur connecté)
-echo "👤 Test d'accès au profil..."
-PROFILE_RESPONSE=$(curl -s -b $COOKIES_FILE $API_URL/api/auth/profile)
-if echo "$PROFILE_RESPONSE" | grep -q "Profil protégé"; then
-    echo "✅ Accès au profil autorisé"
-else
-    echo "❌ Accès au profil refusé"
-fi
-
-# 5. Déconnexion
-echo "🚪 Test de déconnexion..."
-CSRF_TOKEN=$(get_csrf_token)
-LOGOUT_RESPONSE=$(curl -s -b $COOKIES_FILE -X POST $API_URL/api/auth/logout \
-  -H "X-CSRF-Token: $CSRF_TOKEN")
-
-if echo "$LOGOUT_RESPONSE" | grep -q "Déconnecté avec succès"; then
-    echo "✅ Déconnexion réussie"
-else
-    echo "❌ Échec de la déconnexion"
-fi
-
-# 6. Test d'accès non autorisé
-echo "🚫 Test de sécurité (accès non autorisé)..."
-UNAUTH_RESPONSE=$(curl -s $API_URL/api/auth/profile)
-if echo "$UNAUTH_RESPONSE" | grep -q "Non autorisé"; then
-    echo "✅ Sécurité OK - Accès refusé aux utilisateurs non connectés"
-else
-    echo "❌ Problème de sécurité détecté"
-fi
-
-echo ""
-echo "🎉 Tests terminés ! Vérifiez les résultats ci-dessus."
-echo "💡 Nettoyage : rm $COOKIES_FILE"
-```
-
-**Pour utiliser ce script :**
-```bash
-# Le script est déjà disponible dans le projet avec permissions d'exécution
-# Lancer les tests automatisés complets
-./test-api.sh
-
-# Si permissions manquantes :
-chmod +x test-api.sh
+# Script de test complet avec 8 scénarios
 ./test-api.sh
 ```
 
-**Ce que fait le script :**
-- ✅ Teste la connectivité de l'API
-- 🔑 Récupère automatiquement les tokens CSRF
-- 📝 Teste l'inscription avec validation
-- 👤 Vérifie l'accès aux routes protégées  
-- 🛡️ Teste la sécurité (CSRF, authentification)
-- 🚪 Teste la déconnexion
-- 🧹 Nettoie automatiquement les cookies
+**Tests effectués :**
+1. ✅ Connectivité API
+2. ✅ Récupération token CSRF
+3. ✅ Inscription utilisateur
+4. ✅ Accès routes protégées
+5. ✅ Validation des données
+6. ✅ Protection CSRF
+7. ✅ Déconnexion
+8. ✅ Sécurité (accès non autorisé)
 
-**Exemple de sortie complète :**
-```
-🚀 Test automatisé de l'API sécurisée
-==================================
-📡 Nettoyage des anciens cookies
-📡 Test de connectivité...
-✅ API accessible et fonctionnelle
-� Récupération du token CSRF...
-✅ Token CSRF récupéré : ouOtt5yc-8fV-Go...
-� Test d'inscription...
-✅ Inscription réussie
-   👤 Utilisateur créé : testuser1761080647
-� Test d'accès au profil utilisateur...
-✅ Accès au profil autorisé
-   👤 Profil de : testuser1761080647
-📡 Test de validation - mot de passe faible...
-✅ Validation des mots de passe fonctionne
-📡 Test de sécurité - requête sans token CSRF...
-✅ Protection CSRF active
-📡 Test de déconnexion...
-✅ Déconnexion réussie
-📡 Test de sécurité - accès non autorisé après déconnexion...
-✅ Sécurité OK - Accès refusé aux utilisateurs non connectés
+## 📚 Documentation détaillée
 
-🎉 Tests terminés !
-📋 Résumé des tests effectués :
-   • Connectivité API
-   • Récupération token CSRF
-   • Inscription utilisateur
-   • Accès profil protégé
-   • Validation mot de passe
-   • Protection CSRF
-   • Déconnexion
-   • Sécurité accès non autorisé
-
-💡 Nettoyage : rm cookies.txt
-```
-
-**🎯 Tests de sécurité validés :**
-- ✅ **Protection CSRF** : Requêtes sans token rejetées
-- ✅ **Validation stricte** : Mots de passe faibles refusés
-- ✅ **Authentification** : Accès profil protégé seulement si connecté
-- ✅ **Sessions** : Déconnexion effective et sécurisée
-- ✅ **Gestion automatique** : Extraction et utilisation des tokens CSRF
-
-### Tests avec JavaScript/Fetch
-
-```javascript
-// Récupérer le token CSRF
-const csrfResponse = await fetch('/api/auth/csrf-token', {
-  credentials: 'include'
-});
-const { csrfToken } = await csrfResponse.json();
-
-// Inscription avec token CSRF
-const response = await fetch('/api/auth/register', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'X-CSRF-Token': csrfToken
-  },
-  credentials: 'include', // Important pour les cookies
-  body: JSON.stringify({
-    username: 'monUtilisateur',
-    password: 'MonMotDePasse123!'
-  })
-});
-
-const result = await response.json();
-console.log(result);
-```
+| Section | Documentation | Description |
+|---------|---------------|-------------|
+| **Architecture** | [→ src/README.md](src/README.md) | Code source, middlewares, routes, services |
+| **Tests** | [→ tests/README.md](tests/README.md) | Suite de tests, Jest, configuration |
+| **Base de données** | [→ prisma/README.md](prisma/README.md) | Prisma, migrations, schémas MySQL |
+| **Sécurité** | [→ SECURITY.md](SECURITY.md) | CSRF, CORS, validation, résilience |
+| **API** | [→ API.md](API.md) | Endpoints, exemples cURL/JavaScript |
 
 ## ⚠️ Notes importantes
 
@@ -518,292 +214,58 @@ Ce projet utilise les **modules ES natifs** (ESM) :
 - **Développement** : Sessions stockées en mémoire (perdues au redémarrage)
 - **Production** : Configurez Redis ou un store persistant pour les sessions
 
-### Architecture testée
-- **40 tests unitaires** : 100% de réussite sur tous les middlewares
-- **Script d'intégration** : Validation automatique complète de l'API
-- **Configuration Jest** : Support complet des ES modules avec Node.js
+## 🛠️ Scripts de développement
 
-## 🗄️ Base de données MySQL avec Prisma
-
-### Qu'est-ce que Prisma ?
-
-**Prisma** est un ORM (Object-Relational Mapping) moderne et type-safe pour Node.js et TypeScript. Dans ce projet, Prisma joue un rôle crucial en tant que couche d'abstraction entre votre application Express.js et votre base de données MySQL.
-
-### Pourquoi Prisma est important ?
-
-#### ✅ **Sécurité et Type Safety**
-- **Protection SQL Injection** : Requêtes automatiquement sécurisées
-- **Validation des types** : Détection d'erreurs à la compilation
-- **Schema-first** : Base de données définie par le schéma Prisma
-
-#### ✅ **Développement simplifié**
-- **Auto-completion** : IntelliSense complet dans votre IDE
-- **Migrations automatiques** : Synchronisation schema ↔ base de données
-- **Client généré** : API JavaScript type-safe automatiquement créée
-
-#### ✅ **Performance et fiabilité**
-- **Connection pooling** : Gestion optimisée des connexions MySQL
-- **Query optimization** : Requêtes SQL optimisées automatiquement
-- **Retry automatique** : Reconnexion en cas de perte de connexion
-
-#### ✅ **Outils de développement**
-- **Prisma Studio** : Interface graphique pour explorer vos données
-- **Migration system** : Versioning de votre schéma de base de données
-- **Introspection** : Génération du schéma depuis une DB existante
-
-### Modèle utilisateur (Prisma)
-```prisma
-model User {
-  id           Int      @id @default(autoincrement())
-  username     String   @unique @db.VarChar(30)
-  passwordHash String   @db.VarChar(255)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  @@map("users")
-}
-```
-
-### Avantages dans ce projet
-
-- 🔒 **Sécurité renforcée** : Protection automatique contre l'injection SQL
-- 🚀 **Performance** : Pool de connexions optimisé pour MySQL  
-- 🛠️ **Maintenabilité** : Migrations versionnées et schema centralisé
-- 🐛 **Debugging** : Logs détaillés des requêtes en développement
-- 🔄 **Résilience** : Retry automatique avec gestion d'erreurs personnalisée
-
-### Commandes utiles Prisma
 ```bash
-# Voir l'état de la base de données
-npx prisma db pull
+# Développement
+npm run dev              # Serveur avec rechargement automatique
+npm run start            # Serveur production
 
-# Réinitialiser la base de données (⚠️ supprime toutes les données)
-npx prisma migrate reset
+# Tests
+npm run test:unit        # Tests unitaires (40 tests)
+npm run test:coverage    # Tests avec couverture
+npm run test:watch       # Mode watch
+./test-api.sh           # Tests d'intégration complets
 
-# Ouvrir Prisma Studio (interface graphique pour vos données)
-npx prisma studio
+# Base de données
+npm run db:studio        # Interface graphique Prisma
+npm run db:reset         # Réinitialiser la base (⚠️ supprime données)
+npm run db:generate      # Générer le client Prisma
 
-# Générer le client après modification du schéma
-npx prisma generate
-
-# Créer une nouvelle migration après modification du schema
-npx prisma migrate dev --name nom_de_votre_migration
-
-# Appliquer les migrations en production
-npx prisma migrate deploy
-
-# Formatter le schéma Prisma
-npx prisma format
-
-# Valider le schéma Prisma
-npx prisma validate
+# Santé de l'API
+npm run test:health      # Test rapide de l'API
 ```
 
-### Architecture avec Prisma
+## � Problèmes courants
 
-```
-┌─────────────────┐    ┌──────────────┐    ┌─────────────┐
-│   Routes Auth   │ ─► │ UserService  │ ─► │   Prisma    │
-│ (API Express)   │    │ (Logique)    │    │  (Client)   │
-└─────────────────┘    └──────────────┘    └─────────────┘
-                                                   │
-                                           ┌───────▼──────┐
-                                           │    MySQL     │
-                                           │  (Database)  │
-                                           └──────────────┘
-```
-
-Cette architecture sépare clairement :
-- **Routes** : Gestion HTTP et validation
-- **Services** : Logique métier
-- **Prisma** : Accès aux données sécurisé
-- **MySQL** : Stockage persistant
-
-### Variables d'environnement requises
+**Erreur "Access denied" lors des migrations Prisma :**
 ```bash
-PORT=3000                                                      # Port du serveur
-NODE_ENV=development                                           # Environnement (development/production/test)
-SESSION_SECRET=votre_secret_tres_securise_32_caracteres_min    # Secret de session (32+ caractères)
-CORS_ORIGIN=http://localhost:5173                             # Origine CORS autorisée
-DATABASE_URL="mysql://utilisateur:motdepasse@localhost:3306/secure_api"  # Connexion MySQL
+# Solution : Donner les droits nécessaires
+mysql -u root -p -e "GRANT ALL PRIVILEGES ON secure_api.* TO 'votre_utilisateur'@'localhost';"
+mysql -u root -p -e "FLUSH PRIVILEGES;"
 ```
 
-### Exemple d'utilisation de Prisma dans le code
-
-```javascript
-// Création d'un utilisateur avec Prisma
-const user = await prisma.user.create({
-  data: {
-    username: 'john_doe',
-    passwordHash: hashedPassword
-  },
-  select: {
-    id: true,
-    username: true,
-    createdAt: true
-    // passwordHash exclu pour la sécurité
-  }
-});
-
-// Recherche avec conditions et pagination
-const users = await prisma.user.findMany({
-  where: {
-    createdAt: {
-      gte: new Date('2025-01-01')
-    }
-  },
-  orderBy: { createdAt: 'desc' },
-  take: 10 // Limite à 10 résultats
-});
-```
-
-## 🔧 Développement et débogage
-
-### Scripts de développement disponibles
+**Token CSRF invalide :**
 ```bash
-# Développement avec rechargement automatique
-npm run dev
-
-# Tests en mode watch pour développement
-npm run test:watch
-
-# Interface graphique pour explorer la base de données
-npm run db:studio
-
-# Réinitialiser la base de données (⚠️ supprime les données)
-npm run db:reset
-
-# Réinitialiser la base de données de test
-npm run db:reset:test
-
-# Générer le client Prisma après modification du schéma
-npm run db:generate
+# Récupérer un nouveau token avant chaque requête sensible
+CSRF_TOKEN=$(curl -s -c cookies.txt http://localhost:3000/api/auth/csrf-token | jq -r '.csrfToken')
 ```
 
-### Vérification de l'état
+**Port déjà utilisé :**
 ```bash
-# Vérifier que l'API fonctionne
-npm run test:health
-# OU
-curl -f http://localhost:3000/api/health
-
-# Vérifier que MySQL fonctionne
-sudo systemctl status mysql
-
-# Vérifier la connexion à la base
-mysql -u votre_utilisateur -p 
-
-# Utiliser la base de données
-USE secure_api;
-
-# Voir les utilisateurs créés
-SELECT * FROM users;
-```
-
-### Logs et monitoring
-- Les requêtes Prisma sont loggées en mode développement
-- Morgan affiche toutes les requêtes HTTP avec timing
-- Les erreurs sont centralisées via le middleware `errorHandler`
-- Logs colorés dans le terminal pour faciliter le debugging
-
-### Problèmes courants
-
-**Erreur EADDRINUSE** : Port déjà utilisé
-```bash
-# Trouver le processus utilisant le port 3000
-lsof -ti:3000
-
-# L'arrêter
-kill $(lsof -ti:3000)
-
-# L'arrêter de force
+# Libérer le port 3000
 kill -9 $(lsof -ti:3000)
 ```
 
-**Erreur de connexion MySQL** :
-- Vérifiez que MySQL est démarré : `sudo systemctl start mysql` 
-- Vérifiez les credentials dans `DATABASE_URL`
-- Vérifiez que la base `secure_api` existe
-- Testez la connexion : `npx prisma db pull`
+## 🎯 Prêt pour la production
 
-**Erreur "Access denied" lors des migrations Prisma** :
-```bash
-# Problème : L'utilisateur n'a pas les droits pour créer/modifier des bases
-# Solution 1 : Créer la base manuellement avec un utilisateur privilégié
-mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS secure_api;"
+- ✅ **Variables d'environnement** : Configuration sécurisée avec validation
+- ✅ **Tests complets** : 40 tests unitaires + intégration
+- ✅ **Sécurité renforcée** : CSRF, CORS, Rate Limiting, Helmet
+- ✅ **Gestion d'erreurs** : Middleware centralisé avec logs
+- ✅ **Health checks** : Monitoring de l'état système et DB
+- ✅ **ES Modules** : Architecture moderne et maintenable
 
-# Solution 2 : Donner les droits nécessaires à votre utilisateur
-mysql -u root -p -e "GRANT ALL PRIVILEGES ON secure_api.* TO 'votre_utilisateur'@'localhost';"
-mysql -u root -p -e "GRANT CREATE ON *.* TO 'votre_utilisateur'@'localhost';"
-mysql -u root -p -e "FLUSH PRIVILEGES;"
-
-# Solution 3 : Vérifier les droits actuels
-mysql -u votre_utilisateur -p -e "SHOW GRANTS;"
-```
-
-**Erreurs Prisma courantes** :
-- `P2002` : Contrainte unique violée (utilisateur déjà existant)
-- `P2025` : Record non trouvé 
-- `P1001` : Base de données inaccessible
-- Solution : Vérifiez les logs détaillés avec `npx prisma studio`
-
-**Token CSRF invalide** :
-- **Problème** : Erreur 403 "CSRF token mismatch"
-- **Solutions** :
-  ```bash
-  # 1. Vérifiez que les cookies sont sauvegardés ET envoyés
-  curl -c cookies.txt -b cookies.txt http://localhost:3000/api/auth/csrf-token
-  
-  # 2. Récupérez un NOUVEAU token avant chaque action sensible
-  CSRF_TOKEN=$(curl -s -c cookies.txt -b cookies.txt http://localhost:3000/api/auth/csrf-token | grep -o '"csrfToken":"[^"]*"' | cut -d'"' -f4)
-  
-  # 3. Vérifiez le contenu du fichier cookies.txt
-  cat cookies.txt
-  
-  # 4. Si le problème persiste, supprimez les anciens cookies
-  rm cookies.txt
-  ```
-- **Important** : Le token CSRF change à chaque redémarrage du serveur
-- **Astuce** : Utilisez toujours `-c cookies.txt -b cookies.txt` ensemble
-
-##  Prêt pour la production
-
-Pour déployer en production, considérez ces améliorations :
-
-1. **Base de données** : MySQL optimisé + Redis pour les sessions
-2. **Variables d'environnement** : Configuration sécurisée avec validation ✅
-3. **Tests** : Tests unitaires et d'intégration
-4. **Docker** : Containerisation pour le déploiement
-5. **Monitoring** : Prometheus/Grafana ou équivalent
-6. **HTTPS** : Certificats SSL/TLS
-7. **Logs** : Système de logging centralisé
-8. **Pool de connexions** : Optimisation des connexions MySQL
-9. **Backup automatique** : Sauvegarde régulière de la base
-
-## 📊 Validation des données
-
-### Règles de validation implémentées
-
-**Nom d'utilisateur :**
-- 3 à 30 caractères
-- Uniquement alphanumériques
-- Unique en base de données
-
-**Mot de passe :**
-- Minimum 8 caractères
-- Au moins 1 minuscule
-- Au moins 1 majuscule  
-- Au moins 1 chiffre
-- Au moins 1 caractère spécial (@$!%*?&)
-
-### Protection contre les attaques
-
-- **Brute Force** : 5 tentatives max par IP, blocage 15min
-- **CSRF** : Token obligatoire pour toutes les actions sensibles
-- **Rate Limiting** : 100 requêtes/15min par IP
-- **Sessions sécurisées** : httpOnly, secure en production, SameSite
-- **Headers sécurisés** : CSP, HSTS, XSS Protection
-
-## �📝 Licence
+## 📄 Licence
 
 MIT - Utilisez ce squelette librement pour vos projets !
