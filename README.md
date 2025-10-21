@@ -7,10 +7,14 @@
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Security](https://img.shields.io/badge/Security-Production%20Ready-brightgreen.svg)
 
-**Ce que vous obtenez**
-- API Express.js avec Helmet, CORS, limitation de débit, protection CSRF, validation d'entrée (Joi), logging, et routes d'authentification complètes (inscription/connexion/déconnexion).
-- Stockage utilisateur simple en mémoire (pour demo). Remplacez par une vraie base de données en production.
-- Authentification basée sur les sessions avec express-session (stockage mémoire pour le développement uniquement).
+**Un squelette Express.js sécurisé et robuste avec MySQL/Prisma, conçu pour être incassable et prêt pour la production.**
+
+✨ **Fonctionnalités principales :**
+- 🛡️ **Sécurité renforcée** : CSRF, CORS, Rate Limiting, Helmet, validation stricte
+- 🗄️ **Base MySQL/Prisma** : ORM type-safe avec migrations automatiques
+- 🔄 **Résilience maximale** : Gestion d'erreurs avancée, retry automatique, arrêt gracieux
+- ⚡ **Performance optimisée** : Connection pooling, timeout intelligent, health checks
+- 🧪 **Facilement testable** : Exemples cURL/JavaScript, monitoring complet
 
 ## 🚀 Démarrage rapide
 
@@ -21,14 +25,10 @@ npm install
 
 ### 2. **Configurez MySQL :**
 ```bash
-# Installez MySQL si ce n'est pas déjà fait
-sudo apt update
-sudo apt install mysql-server
-
 # Connectez-vous à MySQL
 sudo mysql -u root -p
 
-# Créez la base de données et un utilisateur nécessaire
+# Créez la base de données et un utilisateur
 CREATE DATABASE secure_api;
 CREATE USER 'votre_utilisateur'@'localhost' IDENTIFIED BY 'votre_mot_de_passe';
 GRANT ALL PRIVILEGES ON secure_api.* TO 'votre_utilisateur'@'localhost';
@@ -65,7 +65,11 @@ npx prisma generate
 npm run dev
 ```
 
-### 6. **Le serveur fonctionne sur http://localhost:3000 par défaut.**
+### 6. **Testez l'installation :**
+```bash
+# Le serveur fonctionne sur http://localhost:3000
+curl http://localhost:3000/api/health
+```
 
 ## 🔒 Fonctionnalités de sécurité
 
@@ -159,7 +163,7 @@ curl -b cookies.txt -X POST http://localhost:3000/api/auth/register \
   -H "X-CSRF-Token: VOTRE_TOKEN_ICI" \
   -d '{"username":"testuser","password":"MonMotDePasse123!"}'
 ```
-Réponse : `{"message":"Utilisateur inscrit avec succès","user":{"id":1,"username":"testuser","createdAt":"2024-01-01T00:00:00.000Z"}}`
+Réponse : `{"message":"Utilisateur inscrit avec succès","user":{"id":1,"username":"testuser","createdAt":"2025-10-21T..."}}`
 
 #### 3. **Se connecter :**
 ```bash
@@ -211,9 +215,12 @@ console.log(result);
 
 ## ⚠️ Notes importantes
 
-### Développement vs Production
-- **CSRF** : L'API expose `GET /api/auth/csrf-token` qui retourne un token CSRF à inclure dans les requêtes (header `X-CSRF-Token`) lors de l'utilisation de cookies/sessions.
-- **Stockage** : Ce squelette utilise des stockages en mémoire (sessions, utilisateurs) — **PAS pour la production**. Utilisez des stockages persistants (Redis, DB) et une configuration sécurisée pour la production.
+### CSRF Protection
+L'API utilise une protection CSRF basée sur les sessions. Récupérez le token via `GET /api/auth/csrf-token` et incluez-le dans l'header `X-CSRF-Token` pour toutes les requêtes sensibles.
+
+### Sessions
+- **Développement** : Sessions stockées en mémoire (perdues au redémarrage)
+- **Production** : Configurez Redis ou un store persistant pour les sessions
 
 ## 🗄️ Base de données MySQL avec Prisma
 
@@ -258,11 +265,11 @@ model User {
 
 ### Avantages dans ce projet
 
-🔒 **Sécurité renforcée** : Toutes les requêtes sont protégées contre l'injection SQL
-🚀 **Performance** : Pool de connexions optimisé pour MySQL
-🛠️ **Maintenabilité** : Schema centralisé et migrations versionnées
-🐛 **Debugging** : Logs détaillés des requêtes en développement
-🔄 **Resilience** : Retry automatique avec gestion d'erreurs personnalisée
+- 🔒 **Sécurité renforcée** : Protection automatique contre l'injection SQL
+- 🚀 **Performance** : Pool de connexions optimisé pour MySQL  
+- 🛠️ **Maintenabilité** : Migrations versionnées et schema centralisé
+- 🐛 **Debugging** : Logs détaillés des requêtes en développement
+- 🔄 **Résilience** : Retry automatique avec gestion d'erreurs personnalisée
 
 ### Commandes utiles Prisma
 ```bash
@@ -337,16 +344,15 @@ const user = await prisma.user.create({
   }
 });
 
-// Recherche avec conditions
+// Recherche avec conditions et pagination
 const users = await prisma.user.findMany({
   where: {
     createdAt: {
-      gte: new Date('2024-01-01')
+      gte: new Date('2025-01-01')
     }
   },
-  orderBy: {
-    createdAt: 'desc'
-  }
+  orderBy: { createdAt: 'desc' },
+  take: 10 // Limite à 10 résultats
 });
 ```
 
@@ -360,8 +366,8 @@ sudo systemctl status mysql
 # Vérifier la connexion à la base
 mysql -u votre_utilisateur -p 
 
-# Utilisé la db concerné
-USE secure_api
+# Utiliser la base de données
+USE secure_api;
 
 # Voir les utilisateurs créés
 SELECT * FROM users;
@@ -403,7 +409,7 @@ kill -9 $(lsof -ti:3000)
 - Utilisez `-b cookies.txt` pour les envoyer
 - Récupérez un nouveau token après chaque redémarrage
 
-## �🚀 Prêt pour la production
+##  Prêt pour la production
 
 Pour déployer en production, considérez ces améliorations :
 
@@ -417,7 +423,7 @@ Pour déployer en production, considérez ces améliorations :
 8. **Pool de connexions** : Optimisation des connexions MySQL
 9. **Backup automatique** : Sauvegarde régulière de la base
 
-## � Validation des données
+## 📊 Validation des données
 
 ### Règles de validation implémentées
 
